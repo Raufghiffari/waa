@@ -1,0 +1,20 @@
+{
+	"geolocation": {
+		"data": {
+			"city": "Semarang",
+			"country": {
+				"code": "ID",
+				"name": "Indonesia"
+			},
+			"subdivision": {
+				"code": "JT",
+				"name": "Central Java"
+			},
+			"timezone": "Asia/Jakarta",
+			"latitude": -6.9932,
+			"longitude": 110.4215,
+			"postalCode": "50111"
+		},
+		"timestamp": 1742016671304
+	}
+}
