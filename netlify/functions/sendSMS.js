@@ -1,3 +1,4 @@
+require('dotenv').config();
 // netlify/functions/sendSMS.js
 const twilio = require('twilio');
 
