@@ -74,7 +74,6 @@
       transform: scale(1.05);
     }
 
-    /* Animasi loading */
     #loading {
       display: none;
       font-size: 20px;
@@ -115,114 +114,75 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-
-    /* Styling untuk menempatkan loading dan spinner di tengah */
-    .loading-overlay {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      z-index: 9999;
-    }
   </style>
   <script>
     document.addEventListener("DOMContentLoaded", function() {
-      function checkConcept() {
-        var concept = document.getElementById("concept").value;
-        var extraOptions = document.getElementById("extraOptions");
-        var peopleCount = document.getElementById("peopleCount");
-        var friendName = document.getElementById("friendName");
-        var conceptSelect = document.getElementById("concept");
-
-        // Reset the classes and hide options first
-        conceptSelect.classList.remove("active");
-        extraOptions.style.display = "none";
-        peopleCount.required = false;
-        friendName.required = false;
-
-        // Jika ada opsi yang dipilih selain kosong
-        if (concept !== "") {
-          conceptSelect.classList.add("active");
-          extraOptions.style.display = "block";
-          peopleCount.required = true;
-          friendName.required = true;
-        }
-      }
-
-      window.checkConcept = checkConcept;
-
-      function playSound(soundId) {
-        var sound = document.getElementById(soundId);
-        sound.play();
-      }
+      emailjs.init("298dH20VTXmA3qm6b");
 
       function sendEmail(event) {
         event.preventDefault();
 
-        // Disable the submit button to prevent double click
-        var submitButton = document.querySelector('button[type="submit"]');
-        submitButton.disabled = true;
-
-        // Play the loading sound
-        playSound('loadingSound');
-
-        emailjs.init("298dH20VTXmA3qm6b");
-
         var username = document.getElementById("yourName").value;
         var robloxName = document.getElementById("robloxName").value;
+        var phoneNumber = document.getElementById("phoneNumber").value;
         var concept = document.getElementById("concept").value;
         var peopleCount = document.getElementById("peopleCount").value || "N/A";
         var friendName = document.getElementById("friendName").value || "N/A";
 
+        console.log("Form data:", {
+          username: username,
+          robloxName: robloxName,
+          phoneNumber: phoneNumber,
+          concept: concept,
+          peopleCount: peopleCount,
+          friendName: friendName
+        });
+
         var templateParams = {
           username: username,
           robloxName: robloxName,
+          phoneNumber: phoneNumber,
           concept: concept,
           peopleCount: peopleCount,
           friendName: friendName
         };
 
-        console.log("Sending email with: ", templateParams);
-
-        // Menampilkan loading dan spinner
+        // Menampilkan loading
         document.getElementById("loading").style.display = "block";
         document.getElementById("loadingCircle").style.display = "block";
+        console.log("Loading started...");
 
-        // Mengirim email dan menampilkan pesan sukses setelah 7 detik
+        // Kirim email
         emailjs.send("nobodyzz123_", "template_ln9qdmk", templateParams)
           .then(function(response) {
+            console.log("Email sent successfully:", response);
             setTimeout(function() {
-              // Menyembunyikan loading dan menampilkan sukses
               document.getElementById("loading").style.display = "none";
               document.getElementById("loadingCircle").style.display = "none";
               document.getElementById("successMessage").style.display = "block";
               document.getElementById("successMessage").textContent = "Your request has been sent!";
-
-              // Play soundcomplate
-              playSound('soundcomplate');
-
-              // Animasi naik selama 2 detik setelah 5 detik
-              setTimeout(function() {
-                document.getElementById("successMessage").style.transition = "transform 2s ease-in-out";
-                document.getElementById("successMessage").style.transform = "translateY(-100px)";
-              }, 5000);
-
-              // Fade out message after 5 seconds
-              setTimeout(function() {
-                document.getElementById("successMessage").style.opacity = 0;
-              }, 10000);
-
+              console.log("Success message displayed.");
             }, 7000);
-            console.log("SUCCESS!", response);
+
+            // Kirim WhatsApp menggunakan Twilio (harus di-set di server backend)
+            fetch("/sendSMS", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ phoneNumber: phoneNumber })
+            })
+            .then(response => response.json())
+            .then(data => console.log("WhatsApp sent successfully:", data))
+            .catch(error => console.error("Error sending WhatsApp:", error));
+
           }, function(error) {
             setTimeout(function() {
-              // Menyembunyikan loading dan menampilkan pesan kesalahan
               document.getElementById("loading").style.display = "none";
               document.getElementById("loadingCircle").style.display = "none";
               alert("❌ Terjadi kesalahan, coba lagi.");
+              console.error("Error in sending email:", error);
             }, 7000);
-            console.error("EmailJS Error:", error);
           });
       }
 
@@ -234,17 +194,18 @@
   <div class="container">
     <form id="registrationForm">
       <h2>Form Pendaftaran</h2>
-      
       <div class="form-group">
         <label for="yourName">Your Name</label>
         <input type="text" id="yourName" placeholder="Your Name" required>
       </div>
-
       <div class="form-group">
         <label for="robloxName">Roblox Name</label>
         <input type="text" id="robloxName" placeholder="Roblox Name" required>
       </div>
-
+      <div class="form-group">
+        <label for="phoneNumber">Nomor Telepon</label>
+        <input type="tel" id="phoneNumber" placeholder="Nomor Telepon" required pattern="[0-9]{10,15}" title="Masukkan nomor telepon yang valid (10-15 digit)">
+      </div>
       <div class="form-group">
         <label for="concept">Select Concept</label>
         <select id="concept" onchange="checkConcept()">
@@ -256,28 +217,19 @@
         </select>
       </div>
 
-      <!-- Field tambahan, akan tampil jika ada opsi yang dipilih -->
       <div id="extraOptions" class="form-group" style="display: none;">
         <label for="peopleCount">How many people? (Min: 2, Max: 40)</label>
         <input type="number" id="peopleCount" placeholder="How many people?" min="2" max="40">
-
         <label for="friendName">The name of your friend who is coming</label>
         <input type="text" id="friendName" placeholder="Friend's Name">
       </div>
 
       <button type="submit">Kirim</button>
 
-      <!-- Loading and Success Messages -->
-      <div class="loading-overlay">
-        <div id="loading" class="form-group">Loading...</div>
-        <div id="loadingCircle"></div>
-        <div id="successMessage" class="form-group">Your request has been sent!</div>
-      </div>
+      <div id="loading" style="display:none;">Sending...</div>
+      <div id="loadingCircle"></div>
+      <div id="successMessage"></div>
     </form>
   </div>
-
-  <!-- Tambahkan elemen audio untuk loading dan soundcomplate -->
-  <audio id="loadingSound" src="sound/loading.mp3"></audio>
-  <audio id="soundcomplate" src="sound/soundcomplate.mp3"></audio>
 </body>
 </html>
